@@ -1,0 +1,24 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-22.04"
+  config.vm.box_check_update = false
+
+  config.vm.define "ael-kadhS" do |server|
+    server.vm.hostname = "ael-kadhS"
+    server.vm.network "private_network", ip: "192.168.56.110"
+    server.vm.provider "virtualbox" do |v|
+      v.gui = false
+      v.memory = 1024
+      v.cpus = 1
+    end
+    server.vm.provision "shell", inline:<<-SHELL
+      sudo apt-get update
+      sudo apt-get install -y curl
+      # Install K3s with kubeconfig permissions
+      curl -sfL https://get.k3s.io | sh -s - --write-kubeconfig-mode 644 --node-ip 192.168.56.110
+
+      # creating alias for kubectl
+      echo "alias k=kubectl" >> .bashrc
+      kubectl create -f /vagrant/confs/
+    SHELL
+  end
+end
